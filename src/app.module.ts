@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import dbConfig from './common/config/db.config.js';
@@ -8,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { ResourcesModule } from './resources/resources.module.js';
+import { AppResolver } from './app.resolver.js';
 
 @Module({
   imports: [
@@ -23,7 +23,6 @@ import { ResourcesModule } from './resources/resources.module.js';
     }),
     ResourcesModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppResolver],
 })
 export class AppModule {}

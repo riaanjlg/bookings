@@ -11,7 +11,7 @@ import { ObjectId } from 'mongodb';
 import { CreateResourceInput } from './dto/input/create-resource.input.js';
 import { UpdateResourceInput } from './dto/input/update-resource.input.js';
 
-const DUPLICATE_KEY_ERROR = 1100;
+const DUPLICATE_KEY_ERROR = 11000;
 
 @Injectable()
 export class ResourcesService {
