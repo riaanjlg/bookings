@@ -22,8 +22,4 @@ export class User {
   @Field(() => UserRole)
   @Column()
   role: UserRole;
-
-  @Index({ unique: true, sparse: true }) // sparse should be dropped in phase 4
-  @Column({ nullable: true }) // this too
-  externalId?: string; // should not be optional in phase 4
 }

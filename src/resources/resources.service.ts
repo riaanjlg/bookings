@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -7,11 +6,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Resource } from './entities/resource.entity.js';
 import { MongoRepository } from 'typeorm';
-import { ObjectId } from 'mongodb';
 import { CreateResourceInput } from './dto/input/create-resource.input.js';
 import { UpdateResourceInput } from './dto/input/update-resource.input.js';
-
-const DUPLICATE_KEY_ERROR = 11000;
+import { DUPLICATE_KEY_ERROR } from '../common/constants.js';
+import { toObjectId } from '../common/utils/toObjectId.js';
 
 @Injectable()
 export class ResourcesService {
@@ -25,7 +23,7 @@ export class ResourcesService {
   }
 
   findOne(id: string): Promise<Resource | null> {
-    return this.resourcesRepository.findOneBy({ id: this.toObjectId(id) });
+    return this.resourcesRepository.findOneBy({ id: toObjectId(id) });
   }
 
   create(input: CreateResourceInput): Promise<Resource> {
@@ -53,13 +51,6 @@ export class ResourcesService {
     }
 
     await this.resourcesRepository.remove(resource);
-  }
-
-  private toObjectId(id: string): ObjectId {
-    if (!ObjectId.isValid(id)) {
-      throw new BadRequestException(`"${id}" is not a valid id`);
-    }
-    return new ObjectId(id);
   }
 
   private async save(resource: Resource): Promise<Resource> {
