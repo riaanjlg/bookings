@@ -8,6 +8,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { ResourcesModule } from './resources/resources.module.js';
 import { AppResolver } from './app.resolver.js';
+import { UsersModule } from './users/users.module.js';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AppResolver } from './app.resolver.js';
       useFactory: (gql: ConfigType<typeof graphqlConfig>) => gql,
     }),
     ResourcesModule,
+    UsersModule,
   ],
   providers: [AppService, AppResolver],
 })
