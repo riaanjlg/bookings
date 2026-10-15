@@ -17,7 +17,7 @@ export class UsersResolver {
     return this.usersService.findAll();
   }
 
-  @Query(() => User)
+  @Query(() => User, { nullable: true })
   user(@Args('id', { type: () => ID }) id: string): Promise<User | null> {
     return this.usersService.findOne(id);
   }
