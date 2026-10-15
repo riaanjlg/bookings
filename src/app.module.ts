@@ -9,6 +9,7 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { ResourcesModule } from './resources/resources.module.js';
 import { AppResolver } from './app.resolver.js';
 import { UsersModule } from './users/users.module.js';
+import { BookingsModule } from './bookings/bookings.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UsersModule } from './users/users.module.js';
     }),
     ResourcesModule,
     UsersModule,
+    BookingsModule,
   ],
   providers: [AppService, AppResolver],
 })
