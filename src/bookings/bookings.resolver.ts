@@ -1,4 +1,12 @@
-import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  ID,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { Booking } from './entities/booking.entity.js';
 import { BookingsService } from './bookings.service.js';
 import { CreateBookingPayload } from './dto/payload/create-booking.payload.js';
@@ -7,10 +15,18 @@ import { UpdateBookingInput } from './dto/input/update-booking.input.js';
 import { UpdateBookingPayload } from './dto/payload/update-booking.payload.js';
 import { DeleteBookingPayload } from './dto/payload/delete-booking.payload.js';
 import { DeleteBookingInput } from './dto/input/delete-booking.input.js';
+import { UsersService } from '../users/users.service.js';
+import { ResourcesService } from '../resources/resources.service.js';
+import { User } from '../users/entities/user.entity.js';
+import { Resource } from '../resources/entities/resource.entity.js';
 
 @Resolver(() => Booking)
 export class BookingsResolver {
-  constructor(private readonly bookingsService: BookingsService) {}
+  constructor(
+    private readonly bookingsService: BookingsService,
+    private readonly usersService: UsersService,
+    private readonly resourcesService: ResourcesService,
+  ) {}
 
   @Query(() => [Booking])
   bookings(): Promise<Booking[]> {
@@ -44,5 +60,15 @@ export class BookingsResolver {
   ): Promise<DeleteBookingPayload> {
     await this.bookingsService.remove(input.id);
     return { deletedBookingId: input.id };
+  }
+
+  @ResolveField(() => User)
+  user(@Parent() booking: Booking): Promise<User | null> {
+    return this.usersService.findOne(booking.userId.toString());
+  }
+
+  @ResolveField(() => Resource)
+  resource(@Parent() booking: Booking): Promise<Resource | null> {
+    return this.resourcesService.findOne(booking.resourceId.toString());
   }
 }

@@ -8,5 +8,6 @@ import { Booking } from '../bookings/entities/booking.entity.js';
 @Module({
   imports: [TypeOrmModule.forFeature([User, Booking])],
   providers: [UsersResolver, UsersService],
+  exports: [UsersService],
 })
 export class UsersModule {}

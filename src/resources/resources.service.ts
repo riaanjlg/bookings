@@ -10,12 +10,15 @@ import { CreateResourceInput } from './dto/input/create-resource.input.js';
 import { UpdateResourceInput } from './dto/input/update-resource.input.js';
 import { DUPLICATE_KEY_ERROR } from '../common/constants.js';
 import { toObjectId } from '../common/utils/toObjectId.js';
+import { Booking } from '../bookings/entities/booking.entity.js';
 
 @Injectable()
 export class ResourcesService {
   constructor(
     @InjectRepository(Resource)
     private readonly resourcesRepository: MongoRepository<Resource>,
+    @InjectRepository(Booking)
+    private readonly bookingsRepository: MongoRepository<Booking>,
   ) {}
 
   findAll(): Promise<Resource[]> {
@@ -48,6 +51,16 @@ export class ResourcesService {
 
     if (!resource) {
       throw new NotFoundException(`Resource ${id} not found`);
+    }
+
+    const bookingCount = await this.bookingsRepository.countBy({
+      resourceId: resource.id,
+    });
+
+    if (bookingCount > 0) {
+      throw new ConflictException(
+        `Resource ${id} is used in ${bookingCount} booking(s) and cannot be deleted`,
+      );
     }
 
     await this.resourcesRepository.remove(resource);
