@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -7,17 +6,19 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Resource } from './entities/resource.entity.js';
 import { MongoRepository } from 'typeorm';
-import { ObjectId } from 'mongodb';
 import { CreateResourceInput } from './dto/input/create-resource.input.js';
 import { UpdateResourceInput } from './dto/input/update-resource.input.js';
-
-const DUPLICATE_KEY_ERROR = 1100;
+import { DUPLICATE_KEY_ERROR } from '../common/constants.js';
+import { toObjectId } from '../common/utils/toObjectId.js';
+import { Booking } from '../bookings/entities/booking.entity.js';
 
 @Injectable()
 export class ResourcesService {
   constructor(
     @InjectRepository(Resource)
     private readonly resourcesRepository: MongoRepository<Resource>,
+    @InjectRepository(Booking)
+    private readonly bookingsRepository: MongoRepository<Booking>,
   ) {}
 
   findAll(): Promise<Resource[]> {
@@ -25,7 +26,13 @@ export class ResourcesService {
   }
 
   findOne(id: string): Promise<Resource | null> {
-    return this.resourcesRepository.findOneBy({ id: this.toObjectId(id) });
+    return this.resourcesRepository.findOneBy({ id: toObjectId(id) });
+  }
+
+  findByIds(ids: readonly string[]): Promise<Resource[]> {
+    return this.resourcesRepository.find({
+      where: { _id: { $in: ids.map(toObjectId) } },
+    });
   }
 
   create(input: CreateResourceInput): Promise<Resource> {
@@ -52,14 +59,17 @@ export class ResourcesService {
       throw new NotFoundException(`Resource ${id} not found`);
     }
 
-    await this.resourcesRepository.remove(resource);
-  }
+    const bookingCount = await this.bookingsRepository.countBy({
+      resourceId: resource.id,
+    });
 
-  private toObjectId(id: string): ObjectId {
-    if (!ObjectId.isValid(id)) {
-      throw new BadRequestException(`"${id}" is not a valid id`);
+    if (bookingCount > 0) {
+      throw new ConflictException(
+        `Resource ${id} is used in ${bookingCount} booking(s) and cannot be deleted`,
+      );
     }
-    return new ObjectId(id);
+
+    await this.resourcesRepository.remove(resource);
   }
 
   private async save(resource: Resource): Promise<Resource> {

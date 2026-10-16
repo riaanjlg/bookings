@@ -7,4 +7,5 @@ export default registerAs('database', (): TypeOrmModuleOptions => ({
   database: process.env.MONGODB_DB,
   autoLoadEntities: true,
   synchronize: true,
+  monitorCommands: process.env.NODE_ENV !== 'production',
 }));
