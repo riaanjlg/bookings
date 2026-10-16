@@ -30,6 +30,12 @@ export class UsersService {
     return this.usersRepository.findOneBy({ id: toObjectId(id) });
   }
 
+  findByIds(ids: readonly string[]): Promise<User[]> {
+    return this.usersRepository.find({
+      where: { _id: { $in: ids.map(toObjectId) } },
+    });
+  }
+
   create(input: CreateUserInput): Promise<User> {
     const user = this.usersRepository.create({ ...input, role: UserRole.USER });
     return this.save(user);

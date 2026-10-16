@@ -44,6 +44,12 @@ export class BookingsService {
     });
   }
 
+  findByResourceIds(resourceIds: readonly string[]): Promise<Booking[]> {
+    return this.bookingsRepository.find({
+      where: { resourceId: { $in: resourceIds.map(toObjectId) } },
+    });
+  }
+
   async create(input: CreateBookingInput): Promise<Booking> {
     const userId = toObjectId(input.userId);
     const resourceId = toObjectId(input.resourceId);

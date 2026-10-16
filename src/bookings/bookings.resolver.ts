@@ -1,5 +1,6 @@
 import {
   Args,
+  Context,
   ID,
   Mutation,
   Parent,
@@ -15,18 +16,13 @@ import { UpdateBookingInput } from './dto/input/update-booking.input.js';
 import { UpdateBookingPayload } from './dto/payload/update-booking.payload.js';
 import { DeleteBookingPayload } from './dto/payload/delete-booking.payload.js';
 import { DeleteBookingInput } from './dto/input/delete-booking.input.js';
-import { UsersService } from '../users/users.service.js';
-import { ResourcesService } from '../resources/resources.service.js';
 import { User } from '../users/entities/user.entity.js';
 import { Resource } from '../resources/entities/resource.entity.js';
+import type { Loaders } from '../common/loaders/create-loaders.js';
 
 @Resolver(() => Booking)
 export class BookingsResolver {
-  constructor(
-    private readonly bookingsService: BookingsService,
-    private readonly usersService: UsersService,
-    private readonly resourcesService: ResourcesService,
-  ) {}
+  constructor(private readonly bookingsService: BookingsService) {}
 
   @Query(() => [Booking])
   bookings(): Promise<Booking[]> {
@@ -63,12 +59,18 @@ export class BookingsResolver {
   }
 
   @ResolveField(() => User)
-  user(@Parent() booking: Booking): Promise<User | null> {
-    return this.usersService.findOne(booking.userId.toString());
+  user(
+    @Parent() booking: Booking,
+    @Context('loaders') loaders: Loaders,
+  ): Promise<User | null> {
+    return loaders.userById.load(booking.userId.toString());
   }
 
   @ResolveField(() => Resource)
-  resource(@Parent() booking: Booking): Promise<Resource | null> {
-    return this.resourcesService.findOne(booking.resourceId.toString());
+  resource(
+    @Parent() booking: Booking,
+    @Context('loaders') loaders: Loaders,
+  ): Promise<Resource | null> {
+    return loaders.resourceById.load(booking.resourceId.toString());
   }
 }
