@@ -3,6 +3,7 @@ import { AppModule } from './app.module.js';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { mongoQueriesLogger } from './common/loggers/mongo-queries.logger.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -21,6 +22,8 @@ async function bootstrap() {
   app.enableCors({
     origin: config.getOrThrow<string>('FRONTEND_URL'),
   });
+
+  if (process.env.NODE_ENV !== 'production') mongoQueriesLogger(app);
 
   const port = Number(config.get<number>('PORT') ?? 3000);
   await app.listen(port);

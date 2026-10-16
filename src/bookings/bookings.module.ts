@@ -16,5 +16,6 @@ import { ResourceBookingsResolver } from './resource-bookings.resolver.js';
     ResourcesModule,
   ],
   providers: [BookingsResolver, ResourceBookingsResolver, BookingsService],
+  exports: [BookingsService],
 })
 export class BookingsModule {}

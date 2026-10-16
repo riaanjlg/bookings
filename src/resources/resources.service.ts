@@ -29,6 +29,12 @@ export class ResourcesService {
     return this.resourcesRepository.findOneBy({ id: toObjectId(id) });
   }
 
+  findByIds(ids: readonly string[]): Promise<Resource[]> {
+    return this.resourcesRepository.find({
+      where: { _id: { $in: ids.map(toObjectId) } },
+    });
+  }
+
   create(input: CreateResourceInput): Promise<Resource> {
     const resource = this.resourcesRepository.create(input);
     return this.save(resource);

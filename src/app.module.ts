@@ -10,6 +10,11 @@ import { ResourcesModule } from './resources/resources.module.js';
 import { AppResolver } from './app.resolver.js';
 import { UsersModule } from './users/users.module.js';
 import { BookingsModule } from './bookings/bookings.module.js';
+import { UsersService } from './users/users.service.js';
+import { ResourcesService } from './resources/resources.service.js';
+import { BookingsService } from './bookings/bookings.service.js';
+import { createLoaders } from './common/loaders/create-loaders.js';
+import type { Request, Response } from 'express';
 
 @Module({
   imports: [
@@ -20,8 +25,30 @@ import { BookingsModule } from './bookings/bookings.module.js';
     }),
     GraphQLModule.forRootAsync({
       driver: ApolloDriver,
-      inject: [graphqlConfig.KEY],
-      useFactory: (gql: ConfigType<typeof graphqlConfig>) => gql,
+      imports: [UsersModule, ResourcesModule, BookingsModule],
+      inject: [
+        graphqlConfig.KEY,
+        UsersService,
+        ResourcesService,
+        BookingsService,
+      ],
+      useFactory: (
+        gql: ConfigType<typeof graphqlConfig>,
+        usersService: UsersService,
+        resourcesService: ResourcesService,
+        bookingsService: BookingsService,
+      ) => ({
+        ...gql,
+        context: ({ req, res }: { req: Request; res: Response }) => ({
+          req,
+          res,
+          loaders: createLoaders(
+            usersService,
+            resourcesService,
+            bookingsService,
+          ),
+        }),
+      }),
     }),
     ResourcesModule,
     UsersModule,
