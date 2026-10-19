@@ -25,10 +25,12 @@ async function bootstrap() {
       exceptionFactory: (errors) =>
         new BadRequestException({
           statusCode: HttpStatus.BAD_REQUEST,
-          message: errors
-            .flatMap((error) => Object.values(error.constraints ?? {}))
-            .join('; '),
+          message: 'Validation failed',
           code: ErrorCode.VALIDATION_FAILED,
+          fields: errors.map((error) => ({
+            field: error.property,
+            message: Object.values(error.constraints ?? {})[0],
+          })),
         }),
     }),
   );

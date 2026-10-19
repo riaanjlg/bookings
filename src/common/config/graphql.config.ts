@@ -1,17 +1,9 @@
 import { registerAs } from '@nestjs/config';
 import type { ApolloDriverConfig } from '@nestjs/apollo';
+import { formatError } from '../errors/format-error.js';
 
 export default registerAs('graphql', (): ApolloDriverConfig => ({
   autoSchemaFile: true,
   sortSchema: true,
-  formatError: (formattedError) => {
-    const original = formattedError.extensions?.originalError as
-      { code?: string } | undefined;
-    if (!original?.code) return formattedError;
-
-    return {
-      ...formattedError,
-      extensions: { ...formattedError.extensions, code: original.code },
-    };
-  },
+  formatError,
 }));
