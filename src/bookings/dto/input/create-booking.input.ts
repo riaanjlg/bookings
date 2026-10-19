@@ -1,4 +1,5 @@
 import { Field, ID, InputType } from '@nestjs/graphql';
+import { Transform } from 'class-transformer';
 import {
   IsDate,
   IsMongoId,
@@ -26,6 +27,7 @@ export class CreateBookingInput {
   end: Date;
 
   @Field()
+  @Transform(({ value }) => value.trim())
   @IsString()
   @IsNotEmpty()
   @MaxLength(200)
