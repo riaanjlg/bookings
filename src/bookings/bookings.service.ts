@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,6 +13,8 @@ import { CreateBookingInput } from './dto/input/create-booking.input.js';
 import { UpdateBookingInput } from './dto/input/update-booking.input.js';
 import { User } from '../users/entities/user.entity.js';
 import { Resource } from '../resources/entities/resource.entity.js';
+import { ErrorCode } from '../common/errors/error-codes.js';
+import { MAX_BOOKING_DURATION_MS } from '../common/constants.js';
 
 @Injectable()
 export class BookingsService {
@@ -51,6 +54,8 @@ export class BookingsService {
   }
 
   async create(input: CreateBookingInput): Promise<Booking> {
+    this.assertValidTimes(input.start, input.end, true);
+
     const userId = toObjectId(input.userId);
     const resourceId = toObjectId(input.resourceId);
 
@@ -83,7 +88,13 @@ export class BookingsService {
       throw new NotFoundException(`Booking ${id} not found`);
     }
 
+    const startChanged =
+      changes.start !== undefined &&
+      changes.start.getTime() !== booking.start.getTime();
+
     Object.assign(booking, changes);
+    this.assertValidTimes(booking.start, booking.end, startChanged);
+
     return this.save(booking);
   }
 
@@ -98,10 +109,6 @@ export class BookingsService {
   }
 
   private async save(booking: Booking): Promise<Booking> {
-    if (booking.end <= booking.start) {
-      throw new BadRequestException('End must be after start');
-    }
-
     const clash = await this.bookingsRepository.findOne({
       where: {
         resourceId: booking.resourceId,
@@ -112,11 +119,39 @@ export class BookingsService {
     });
 
     if (clash) {
-      throw new ConflictException(
-        'This resource is already booked for that time',
-      );
+      throw new ConflictException({
+        statusCode: HttpStatus.CONFLICT,
+        message: 'This resource is already booked for that time',
+        code: ErrorCode.BOOKING_OVERLAP,
+      });
     }
 
     return this.bookingsRepository.save(booking);
+  }
+
+  private assertValidTimes(start: Date, end: Date, checkPast: boolean) {
+    if (end <= start) {
+      throw new BadRequestException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'End must be after start',
+        code: ErrorCode.BOOKING_END_BEFORE_START,
+      });
+    }
+
+    if (end.getTime() - start.getTime() > MAX_BOOKING_DURATION_MS) {
+      throw new BadRequestException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'A booking cannot be longer than 8 hours',
+        code: ErrorCode.BOOKING_TOO_LONG,
+      });
+    }
+
+    if (checkPast && start < new Date()) {
+      throw new BadRequestException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'A booking cannot start in the past',
+        code: ErrorCode.BOOKING_IN_PAST,
+      });
+    }
   }
 }
