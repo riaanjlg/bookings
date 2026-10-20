@@ -1,0 +1,63 @@
+name: Deploy Bookings API to Development
+
+on:
+  push:
+    branches:
+      - development
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_WEBAPP_NAME: bookings-dev-api
+  IMAGE_NAME: bookings-api
+  RESOURCE_GROUP: rg-bookings
+  ENVIRONMENT: Development
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. Log in to Azure
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_DEV }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # 3. Log in to Azure Container Registry
+      - name: Log in to ACR
+        run: az acr login --name ${{ vars.ACR_LOGIN_SERVER }}
+
+      # 4. Build and push Docker image to ACR
+      - name: Build and push Docker image
+        run: |
+          SHA_TAG=${{ github.sha }}
+          docker build -f Dockerfile -t ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:dev .
+          docker tag ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:dev ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:dev-${SHA_TAG::7}
+          docker push ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:dev
+          docker push ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:dev-${SHA_TAG::7}
+
+      # 5. Deploy the new image to App Service
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          images: ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:dev
+
+      # 6. Set the correct port on App Service (API runs on 3000)
+      - name: Configure App Service port
+        run: |
+          az webapp config appsettings set \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --settings WEBSITES_PORT=3000
