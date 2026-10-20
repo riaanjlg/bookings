@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import {
   BadRequestException,
   HttpStatus,
-  Logger,
   ValidationPipe,
 } from '@nestjs/common';
 import { mongoQueriesLogger } from './common/loggers/mongo-queries.logger.js';
@@ -13,7 +12,7 @@ import { ErrorCode } from './common/errors/error-codes.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  const config = await app.get(ConfigService);
+  const config = app.get(ConfigService);
 
   app.useGlobalPipes(
     new ValidationPipe({
