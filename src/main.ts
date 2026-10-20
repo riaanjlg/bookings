@@ -36,7 +36,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: config.getOrThrow<string>('FRONTEND_URL'),
+    origin: config.get<string>('FRONTEND_URL') ?? 'http://localhost:5173',
   });
 
   if (process.env.NODE_ENV !== 'production') mongoQueriesLogger(app);
