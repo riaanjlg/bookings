@@ -75,9 +75,15 @@ async function seed() {
     createdResources.push(createdResource);
   }
 
+  const today = new Date();
   for (let i = 0; i < 12; i++) {
-    const start = new Date(Date.UTC(2026, 9, 19 + i, 9, 0));
-    const end = new Date(Date.UTC(2026, 9, 19 + i, 10, 0));
+    const day = today.getUTCDate() + 1 + i;
+    const start = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), day, 9, 0),
+    );
+    const end = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), day, 10, 0),
+    );
     await bookingsService.create({
       userId: createdUsers[i % 4].id.toString(),
       resourceId: createdResources[i % 3].id.toString(),
@@ -86,6 +92,7 @@ async function seed() {
       purpose: 'testing',
     });
   }
+
   await app.close();
 }
 seed();

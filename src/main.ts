@@ -2,8 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Logger,
+  ValidationPipe,
+} from '@nestjs/common';
 import { mongoQueriesLogger } from './common/loggers/mongo-queries.logger.js';
+import { ErrorCode } from './common/errors/error-codes.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -16,6 +22,16 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      exceptionFactory: (errors) =>
+        new BadRequestException({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Validation failed',
+          code: ErrorCode.VALIDATION_FAILED,
+          fields: errors.map((error) => ({
+            field: error.property,
+            message: Object.values(error.constraints ?? {})[0],
+          })),
+        }),
     }),
   );
 

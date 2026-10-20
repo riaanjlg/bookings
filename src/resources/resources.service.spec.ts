@@ -9,6 +9,7 @@ import { ObjectId } from 'mongodb';
 import { Resource } from './entities/resource.entity.js';
 import { ResourceType } from './enums/resource-type.enum.js';
 import { ResourcesService } from './resources.service.js';
+import { Booking } from '../bookings/entities/booking.entity.js';
 
 const DUPLICATE_KEY_CODE = 11000;
 
@@ -32,13 +33,17 @@ describe('ResourcesService', () => {
     remove: vi.fn(),
   };
 
+  const bookingsRepository = { countBy: vi.fn() };
+
   beforeEach(async () => {
     vi.resetAllMocks();
+    bookingsRepository.countBy.mockResolvedValue(0);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ResourcesService,
         { provide: getRepositoryToken(Resource), useValue: repository },
+        { provide: getRepositoryToken(Booking), useValue: bookingsRepository },
       ],
     }).compile();
 
@@ -180,6 +185,16 @@ describe('ResourcesService', () => {
       await expect(
         service.remove(new ObjectId().toHexString()),
       ).rejects.toThrow(NotFoundException);
+      expect(repository.remove).not.toHaveBeenCalled();
+    });
+    it('refuses to remove a resource that has bookings', async () => {
+      const existing = makeResource();
+      repository.findOneBy.mockResolvedValue(existing);
+      bookingsRepository.countBy.mockResolvedValue(2);
+
+      await expect(service.remove(existing.id.toHexString())).rejects.toThrow(
+        ConflictException,
+      );
       expect(repository.remove).not.toHaveBeenCalled();
     });
   });
