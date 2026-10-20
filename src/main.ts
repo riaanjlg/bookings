@@ -43,9 +43,6 @@ async function bootstrap() {
 
   const port = Number(config.get<number>('PORT') ?? 3000);
   await app.listen(port);
-
-  const logger = new Logger('Bootstrap');
-  logger.log(`GraphQL: http://localhost:${port}/graphql`);
 }
 
 await bootstrap();
